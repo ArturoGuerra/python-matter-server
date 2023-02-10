@@ -21,7 +21,7 @@ class DeviceType:
 
     device_type: int
     clusters: set[type[all_clusters.Cluster]]
-    opt_clusters: typing.Optional[dict[type[all_clusters.Cluster], ClusterConformance | list[ClusterConformance]]]
+    opt_clusters: typing.Optional[dict[type[all_clusters.Cluster], ClusterConformance | all_clusters.Cluster | list[ClusterConformance | all_clusters.Cluster]]]
 
     def __init_subclass__(cls, *, device_type: int, **kwargs: typing.Any) -> None:
         """Register a subclass."""
