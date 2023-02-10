@@ -6,6 +6,7 @@ Do not override!
 """
 from __future__ import annotations
 
+from enum import Enum
 import typing
 
 from chip.clusters import Objects as all_clusters
@@ -20,12 +21,24 @@ class DeviceType:
 
     device_type: int
     clusters: set[type[all_clusters.Cluster]]
+    opt_clusters: typing.Optional[dict[type[all_clusters.Cluster], ClusterConformance | list[ClusterConformance]]]
 
     def __init_subclass__(cls, *, device_type: int, **kwargs: typing.Any) -> None:
         """Register a subclass."""
         super().__init_subclass__(**kwargs)
         cls.device_type = device_type
         ALL_TYPES[device_type] = cls
+
+
+# Should find a way to do this in a per device basis
+class ClusterConformance(Enum):
+    """Cluster conformance."""
+
+    OPTIONAL = 0
+    ETHERNET = 1
+    WIFI = 2
+    THREAD = 3
+    SOMEOTHERRANDOMREASON = 4
 
 
 class OrphanClusters(DeviceType, device_type=0xF001):
@@ -47,8 +60,6 @@ class RootNode(DeviceType, device_type=0x0016):
         all_clusters.BasicInformation,
         all_clusters.Descriptor,
         all_clusters.GeneralCommissioning,
-        all_clusters.PowerSourceConfiguration,
-        all_clusters.TimeSynchronization,
         all_clusters.GroupKeyManagement,
         all_clusters.NetworkCommissioning,
         all_clusters.AdministratorCommissioning,
@@ -57,12 +68,18 @@ class RootNode(DeviceType, device_type=0x0016):
         all_clusters.TimeFormatLocalization,
         all_clusters.UnitLocalization,
         all_clusters.GeneralDiagnostics,
-        all_clusters.DiagnosticLogs,
-        all_clusters.SoftwareDiagnostics,
-        all_clusters.EthernetNetworkDiagnostics,
-        all_clusters.WiFiNetworkDiagnostics,
-        all_clusters.ThreadNetworkDiagnostics,
     }
+
+    opt_clusters = {
+        all_clusters.DiagnosticLogs: ClusterConformance.OPTIONAL,
+        all_clusters.PowerSourceConfiguration: ClusterConformance.OPTIONAL,
+        all_clusters.SoftwareDiagnostics: ClusterConformance.OPTIONAL,
+        all_clusters.TimeSynchronization: ClusterConformance.OPTIONAL,
+        all_clusters.EthernetNetworkDiagnostics: ClusterConformance.ETHERNET,
+        all_clusters.WiFiNetworkDiagnostics: ClusterConformance.WIFI,
+        all_clusters.ThreadNetworkDiagnostics: ClusterConformance.THREAD,
+    }
+
 
 
 class PowerSource(DeviceType, device_type=0x0011):
