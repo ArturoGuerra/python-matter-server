@@ -45,7 +45,7 @@ DATA_KEY_LAST_NODE_ID = "last_node_id"
 
 LOGGER = logging.getLogger(__name__)
 INTERVIEW_TASK_LIMIT = 10
-NODEID_LENGTH = 8
+NODEID_MASK = 0xFFFFFFFF
 
 
 class MatterDeviceController:
@@ -512,10 +512,8 @@ class MatterDeviceController:
 
     def _get_next_node_id(self) -> int:
         """Return next node_id."""
-        node_id: int = int(
-            uuid4().hex[:NODEID_LENGTH], 16
-        )  # Make sure node_id is base 16
-        assert node_id not in self._nodes
+        node_id: int = uuid4().int & NODEID_MASK
+        assert node_id not in self._nodes, "Node ID already exists"
         return node_id
 
     async def _call_sdk(self, func: Callable[..., _T], *args: Any, **kwargs: Any) -> _T:
