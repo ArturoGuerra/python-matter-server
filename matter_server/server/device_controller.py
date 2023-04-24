@@ -9,6 +9,7 @@ from functools import partial
 import logging
 import time
 from typing import TYPE_CHECKING, Any, Callable, Coroutine, Deque, Type, TypeVar, cast
+from uuid import uuid4
 
 from chip.ChipDeviceCtrl import CommissionableNode
 from chip.clusters import Attribute, Objects as Clusters
@@ -44,6 +45,7 @@ DATA_KEY_LAST_NODE_ID = "last_node_id"
 
 LOGGER = logging.getLogger(__name__)
 INTERVIEW_TASK_LIMIT = 10
+NODEID_LENGTH = 8
 
 
 class MatterDeviceController:
@@ -510,9 +512,11 @@ class MatterDeviceController:
 
     def _get_next_node_id(self) -> int:
         """Return next node_id."""
-        next_node_id = cast(int, self.server.storage.get(DATA_KEY_LAST_NODE_ID, 0)) + 1
-        self.server.storage.set(DATA_KEY_LAST_NODE_ID, next_node_id, force=True)
-        return next_node_id
+        node_id: int = int(
+            uuid4().hex[:NODEID_LENGTH], 16
+        )  # Make sure node_id is base 16
+        assert node_id not in self._nodes
+        return node_id
 
     async def _call_sdk(self, func: Callable[..., _T], *args: Any, **kwargs: Any) -> _T:
         """Call function on the SDK in executor and return result."""
